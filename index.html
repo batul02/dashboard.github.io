@@ -1,0 +1,721 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DataVis Dashboard</title>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <style type="text/css">
+  body{
+    background-color: black;
+    color: white;
+    padding-left: 30px;
+  }
+  svg {
+    font: 10px sans-serif;
+    shape-rendering: crispEdges;
+  }
+  .barchart{
+    background-color: #313131;
+    height:300px;
+    width: 500px;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+  }
+ 
+  path.domain {
+    stroke: none;
+  }
+ 
+  .y .tick line {
+    stroke: #ddd;
+  }
+  .legend{
+    fill: white;
+    font-family: Segoe UI;
+  }
+  </style>
+  <style>
+  .main{
+	  background-color: #313131;
+	  width: 500px;
+    height: 300px;
+    font-size: 10px;
+    fill: white;
+
+  }
+  #chartdiv {
+ 	  width: 500px;
+    height: 250px;
+    font-size: 10px;
+    fill: white;
+  }
+  .caption{
+	  fill: #000;
+    font-size: 12pt;
+    font-family: Segoe UI;
+    font-weight: bold;
+  }
+
+  </style>
+  <style>
+  .worldmap{
+    background-color: #313131;
+    position: absolute;
+    top: 20px;
+    left: 550px;
+    margin-top: 50px;
+  }
+
+  .linegraph{
+    margin-top: 55px;
+  }
+  .countries {
+    fill: none;
+    stroke: #fff;
+    stroke-linejoin: round;
+  }
+  .legendThreshold {
+      font-size: 12px;
+      font-family: Segoe UI;
+      fill: white;
+      text-align: left;
+      vertical-align: bottom;
+
+} 
+     
+  </style>
+  <style type="text/css">
+    .linegraph{
+      background-color: #313131;
+      position: absolute;
+      top: 400px;
+      left: 550px;
+      fill: white;
+
+    }
+    .line {
+      stroke-width: 2;
+      fill: none;
+      
+    }
+
+    .axis path {
+      stroke: black;
+    }
+    .text {
+      font-size: 12px;
+    }
+    .title-text {
+       font-size: 12px;
+      }
+      
+    .caption{
+      padding-left: 10px;
+    }
+  </style>
+
+
+
+</head>
+<body>
+
+  <h3>Created by:</h3>
+  <ul>
+    <li>Ishita(180210107025)</li>
+    <li>Ankita(180210107053)</li>
+    <li>Dhruvi(180210107019)</li>
+    <li>Batul(180210107031)</li>
+  </ul>
+
+  <!--Stacked Barchart Code Ahead -->
+
+
+<script type="text/javascript">
+
+// Setup svg using Bostock's margin convention
+
+var margin = {top: 20, right: 160, bottom: 35, left: 30};
+
+var width = 500 - margin.left - margin.right,
+    height = 275 - margin.top - margin.bottom;
+
+d3.select('body').append("div").attr("class", "barchart");
+d3.select('.barchart').append("h4").attr("class", "caption").text("Language Usage Over The Years");
+
+var svg = d3.select('.barchart')
+  .append("svg")
+  .attr("width", 500)
+  .attr("height", 275)
+  .attr("class", "svgcontainer");
+
+var svg = d3.select(".svgcontainer")
+  .append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+/* Data in strings like it would be if imported from a csv */
+
+var data = [
+  { year: "2006", redDelicious: "10", mcintosh: "15", oranges: "9", pears: "6" },
+  { year: "2007", redDelicious: "12", mcintosh: "18", oranges: "9", pears: "4" },
+  { year: "2008", redDelicious: "05", mcintosh: "20", oranges: "8", pears: "2" },
+  { year: "2009", redDelicious: "01", mcintosh: "15", oranges: "5", pears: "4" },
+  { year: "2010", redDelicious: "02", mcintosh: "10", oranges: "4", pears: "2" },
+  { year: "2011", redDelicious: "03", mcintosh: "12", oranges: "6", pears: "3" },
+  { year: "2012", redDelicious: "04", mcintosh: "15", oranges: "8", pears: "1" },
+  { year: "2013", redDelicious: "06", mcintosh: "11", oranges: "9", pears: "4" },
+  { year: "2014", redDelicious: "10", mcintosh: "13", oranges: "9", pears: "5" },
+  { year: "2015", redDelicious: "16", mcintosh: "19", oranges: "6", pears: "9" },
+  { year: "2016", redDelicious: "19", mcintosh: "17", oranges: "5", pears: "7" },
+];
+
+var parse = d3.time.format("%Y").parse;
+
+
+// Transpose the data into layers
+var dataset = d3.layout.stack()(["redDelicious", "mcintosh", "oranges", "pears"].map(function(fruit) {
+  return data.map(function(d) {
+    return {x: parse(d.year), y: +d[fruit]};
+  });
+}));
+
+
+// Set x, y and colors
+var x = d3.scale.ordinal()
+  .domain(dataset[0].map(function(d) { return d.x; }))
+  .rangeRoundBands([10, width-10], 0.02);
+
+var y = d3.scale.linear()
+  .domain([0, d3.max(dataset, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
+  .range([height, 0]);
+
+var colors = ["#6871DC","#C768DC","#6894DC","#68B7DC"];
+
+
+// Define and draw axes
+var yAxis = d3.svg.axis()
+  .scale(y)
+  .orient("left")
+  .ticks(5)
+  .tickSize(-width, 0, 0)
+  .tickFormat( function(d) { return d } );
+
+var xAxis = d3.svg.axis()
+  .scale(x)
+  .orient("bottom")
+  .tickFormat(d3.time.format("%Y"));
+
+svg.append("g")
+  .attr("class", "y axis")
+  .attr("fill","white")
+  .call(yAxis);
+
+svg.append("g")
+  .attr("class", "x axis")
+  .attr("fill","white")
+  .attr("transform", "translate(0," + height + ")")
+  .call(xAxis);
+
+
+// Create groups for each series, rects for each segment 
+var groups = svg.selectAll("g.cost")
+  .data(dataset)
+  .enter().append("g")
+  .attr("class", "cost")
+  .style("fill", function(d, i) { return colors[i]; });
+
+var rect = groups.selectAll("rect")
+  .data(function(d) { return d; })
+  .enter()
+  .append("rect")
+  .attr("x", function(d) { return x(d.x); })
+  .attr("y", function(d) { return y(d.y0 + d.y); })
+  .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
+  .attr("width", x.rangeBand())
+  .on("mouseover", function() { tooltip.style("display", null); })
+  .on("mouseout", function() { tooltip.style("display", "none"); })
+  .on("mousemove", function(d) {
+    var xPosition = d3.mouse(this)[0] - 15;
+    var yPosition = d3.mouse(this)[1] - 25;
+    tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+    tooltip.select("text").text(d.y);
+  });
+
+
+// Draw legend
+var legend = svg.selectAll(".legend")
+  .data(colors)
+  .enter().append("g")
+  .attr("class", "legend")
+  .attr("transform", function(d, i) { return "translate(30," + i * 19 + ")"; });
+ 
+legend.append("rect")
+  .attr("x", width - 18)
+  .attr("width", 18)
+  .attr("height", 18)
+  .style("fill", function(d, i) {return colors.slice().reverse()[i];});
+ 
+legend.append("text")
+  .attr("x", width + 5)
+  .attr("y", 9)
+  .attr("dy", ".35em")
+  .style("text-anchor", "start")
+  .text(function(d, i) { 
+    switch (i) {
+      case 0: return "Java";
+      case 1: return "Python";
+      case 2: return "C++";
+      case 3: return "C#";
+    }
+  });
+
+
+// Prep the tooltip bits, initial display is hidden
+var tooltip = svg.append("g")
+  .attr("class", "tooltip")
+  .style("display", "none");
+    
+tooltip.append("rect")
+  .attr("width", 30)
+  .attr("height", 20)
+  .attr("fill", "white")
+  .style("opacity", 0.5);
+
+tooltip.append("text")
+  .attr("x", 15)
+  .attr("dy", "1.2em")
+  .style("text-anchor", "middle")
+  .attr("font-size", "12px")
+  .attr("font-weight", "bold")
+  .attr("fill","white");
+
+</script>
+
+
+<!-- PieChart Code Ahead -->
+
+
+<script src="https://www.amcharts.com/lib/4/core.js"></script>
+<script src="https://www.amcharts.com/lib/4/charts.js"></script>
+<script src="https://www.amcharts.com/lib/4/themes/dark.js"></script>
+<script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+
+<!-- Chart code -->
+<script>
+am4core.ready(function() {
+
+// Themes begin
+am4core.useTheme(am4themes_dark);
+am4core.useTheme(am4themes_animated);
+// Themes end
+
+// Create chart instance
+var chart = am4core.create("chartdiv", am4charts.PieChart);
+
+
+// Add and configure Series
+var pieSeries = chart.series.push(new am4charts.PieSeries());
+pieSeries.dataFields.value = "usage";
+pieSeries.dataFields.category = "language";
+
+// Put a thick white border around each Slice
+pieSeries.slices.template.stroke = am4core.color("#fff");
+pieSeries.slices.template.strokeWidth = 2;
+pieSeries.slices.template.strokeOpacity = 1;
+pieSeries.slices.template
+  // change the cursor on hover to make it apparent the object can be interacted with
+  .cursorOverStyle = [
+    {
+      "property": "cursor",
+      "value": "pointer"
+    }
+  ];
+
+pieSeries.alignLabels = false;
+pieSeries.labels.template.bent = true;
+pieSeries.labels.template.radius = 3;
+pieSeries.labels.template.padding(0,0,0,0);
+
+
+pieSeries.ticks.template.disabled = true;
+
+// Create a base filter effect (as if it's not there) for the hover to return to
+var shadow = pieSeries.slices.template.filters.push(new am4core.DropShadowFilter);
+shadow.opacity = 0;
+
+// Create hover state
+var hoverState = pieSeries.slices.template.states.getKey("hover"); // normally we have to create the hover state, in this case it already exists
+
+// Slightly shift the shadow and make it more prominent on hover
+var hoverShadow = hoverState.filters.push(new am4core.DropShadowFilter);
+hoverShadow.opacity = 0.7;
+hoverShadow.blur = 5;
+
+// Add a legend
+chart.legend = new am4charts.Legend();
+
+chart.data = [{
+  "language": "C++",
+  "usage": 15
+},{
+  "language": "Kotlin",
+  "usage": 10
+}, {
+  "language": "Java",
+  "usage": 40
+}, {
+  "language": "Python",
+  "usage": 15
+}, {
+  "language": "C#",
+  "usage": 15
+}, {
+  "language": "VB",
+  "usage": 5
+}];
+
+}); // end am4core.ready()
+</script>
+
+<div class="main">
+	<h4 class="caption">Language Usage</h4>
+  <div id="chartdiv"></div>
+</div>
+
+<!-- World Map Choreopleth Code Ahead -->
+
+<div class="worldmap">
+  <h4 class="caption">Students All Over The World</h4>
+  <svg width="700" height="300" class="worldmapsvg"></svg>
+</div>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.js"></script>
+<script>
+
+// The svg
+var worldmapsvg = d3.select(".worldmapsvg"),
+    width = +worldmapsvg.attr("width"),
+    height = +worldmapsvg.attr("height");
+    
+
+// Map and projection
+var path = d3.geoPath();
+var projection = d3.geoNaturalEarth()
+    .scale(width / 2 / Math.PI)
+    .translate([400, 150])
+var path = d3.geoPath()
+    .projection(projection);
+
+// Data and color scale
+var rawdata = d3.map();
+var colorScheme = d3.schemeBlues[6];
+colorScheme.unshift("#ADD8E6")
+var colorScale = d3.scaleThreshold()
+    .domain([1, 6, 11, 26, 101, 1001])
+    .range(colorScheme);
+
+// Legend
+
+var g = worldmapsvg.append("g")
+    .attr("class", "legendThreshold")
+    .attr("transform", "translate(10,5)");
+g.append("text")
+    .attr("x", 0)
+    .attr("y", 175)
+    .text("Highest");
+g.append("text")
+    .attr("x", 0)
+    .attr("y", 225)
+    .text("Average");
+g.append("text")
+    .attr("x", 0)
+    .attr("y", 275)
+    .text("Lowest");
+
+
+var labels = ['0', '1-5', '6-10', '11-25', '26-100', '101-1000', '> 1000'];
+var legend = d3.legendColor()
+
+    .labels(function (d) { return labels[d.i]; })
+    .shapePadding(8)
+
+    .scale(colorScale);
+   
+
+worldmapsvg.select(".legendThreshold")
+    .call(legend);
+
+
+// Load external data and boot
+d3.queue()
+    .defer(d3.json, "http://enjalot.github.io/wwsd/data/world/world-110m.geojson")
+    .defer(d3.csv, "mooc-countries.csv", function(d) { rawdata.set(d.code, +d.total); })
+    .await(ready);
+
+function ready(error, topo) {
+    if (error) throw error;
+
+    // Draw the map
+    worldmapsvg.append("g")
+        .attr("class", "countries")
+        .selectAll("path")
+        .data(topo.features)
+        .enter().append("path")
+            .attr("fill", function (d){
+                // Pull data for this country
+                d.total = rawdata.get(d.id) || 0;
+                // Set the color
+                return colorScale(d.total);
+            })
+            .attr("d", path);
+}
+</script>
+
+
+
+<div class="linegraph">
+  <h4 class="caption">Students All Over The World</h4>
+  <svg width="600" height="200" class="linegraphsvg"></svg>
+</div>
+
+<script type="text/javascript">
+    var data = [
+  {
+    name: "USA",
+    values: [
+      {date: "2000", price: "100"},
+      {date: "2001", price: "110"},
+      {date: "2002", price: "145"},
+      {date: "2003", price: "241"},
+      {date: "2004", price: "101"},
+      {date: "2005", price: "90"},
+      {date: "2006", price: "10"},
+      {date: "2007", price: "35"},
+      {date: "2008", price: "21"},
+      {date: "2009", price: "201"}
+    ]
+  },
+  {
+    name: "Canada",
+    values: [
+      {date: "2000", price: "200"},
+      {date: "2001", price: "120"},
+      {date: "2002", price: "33"},
+      {date: "2003", price: "21"},
+      {date: "2004", price: "51"},
+      {date: "2005", price: "190"},
+      {date: "2006", price: "120"},
+      {date: "2007", price: "85"},
+      {date: "2008", price: "221"},
+      {date: "2009", price: "101"}
+    ]
+  },
+  {
+    name: "Maxico",
+    values: [
+      {date: "2000", price: "50"},
+      {date: "2001", price: "10"},
+      {date: "2002", price: "5"},
+      {date: "2003", price: "71"},
+      {date: "2004", price: "20"},
+      {date: "2005", price: "9"},
+      {date: "2006", price: "220"},
+      {date: "2007", price: "235"},
+      {date: "2008", price: "61"},
+      {date: "2009", price: "10"}
+    ]
+  },
+  {
+    name: "Pakistan",
+    values: [
+      {date: "2000", price: "110"},
+      {date: "2001", price: "120"},
+      {date: "2002", price: "135"},
+      {date: "2003", price: "221"},
+      {date: "2004", price: "121"},
+      {date: "2005", price: "60"},
+      {date: "2006", price: "40"},
+      {date: "2007", price: "35"},
+      {date: "2008", price: "21"},
+      {date: "2009", price: "201"}
+    ]
+  }
+];
+
+var width = 600;
+var height = 200;
+var margin = 50;
+var duration = 350;
+
+var lineOpacity = "0.25";
+var lineOpacityHover = "0.85";
+var otherLinesOpacityHover = "0.1";
+var lineStroke = "1.5px";
+var lineStrokeHover = "2.5px";
+
+var circleOpacity = '0.85';
+var circleOpacityOnLineHover = "0.25"
+var circleRadius = 3;
+var circleRadiusHover = 6;
+
+
+/* Format Data */
+var parseDate = d3.timeParse("%Y");
+data.forEach(function(d) { 
+  d.values.forEach(function(d) {
+    d.date = parseDate(d.date);
+    d.price = +d.price;    
+  });
+});
+
+
+/* Scale */
+var xScale = d3.scaleTime()
+  .domain(d3.extent(data[0].values, d => d.date))
+  .range([0, width-margin]);
+
+var yScale = d3.scaleLinear()
+  .domain([0, d3.max(data[0].values, d => d.price)])
+  .range([height-margin, 0]);
+
+var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+/* Add SVG */
+var svg = d3.select(".linegraphsvg")
+  .attr("width", (width+margin)+"px")
+  .attr("height", (height+margin)+"px")
+  .append('g')
+  .attr("transform", `translate(${margin}, ${margin})`);
+
+
+/* Add line into SVG */
+var line = d3.line()
+  .x(d => xScale(d.date))
+  .y(d => yScale(d.price));
+
+let lines = svg.append('g')
+  .attr('class', 'lines');
+
+lines.selectAll('.line-group')
+  .data(data).enter()
+  .append('g')
+  .attr('class', 'line-group')  
+  .on("mouseover", function(d, i) {
+      svg.append("text")
+        .attr("class", "title-text")
+        .style("fill", color(i))        
+        .text(d.name)
+        .attr("text-anchor", "middle")
+        .attr("x", (width-margin)/2)
+        .attr("y", 5);
+    })
+  .on("mouseout", function(d) {
+      svg.select(".title-text").remove();
+    })
+  .append('path')
+  .attr('class', 'line')  
+  .attr('d', d => line(d.values))
+  .style('stroke', (d, i) => color(i))
+  .style('opacity', lineOpacity)
+  .on("mouseover", function(d) {
+      d3.selectAll('.line')
+          .style('opacity', otherLinesOpacityHover);
+      d3.selectAll('.circle')
+          .style('opacity', circleOpacityOnLineHover);
+      d3.select(this)
+        .style('opacity', lineOpacityHover)
+        .style("stroke-width", lineStrokeHover)
+        .style("cursor", "pointer");
+    })
+  .on("mouseout", function(d) {
+      d3.selectAll(".line")
+          .style('opacity', lineOpacity);
+      d3.selectAll('.circle')
+          .style('opacity', circleOpacity);
+      d3.select(this)
+        .style("stroke-width", lineStroke)
+        .style("cursor", "none");
+    });
+
+
+/* Add circles in the line */
+lines.selectAll("circle-group")
+  .data(data).enter()
+  .append("g")
+  .style("fill", (d, i) => color(i))
+  .selectAll("circle")
+  .data(d => d.values).enter()
+  .append("g")
+  .attr("class", "circle")  
+  .on("mouseover", function(d) {
+      d3.select(this)     
+        .style("cursor", "pointer")
+        .append("text")
+        .attr("class", "text")
+        .text(`${d.price}`)
+        .attr("x", d => xScale(d.date) + 5)
+        .attr("y", d => yScale(d.price) - 10);
+    })
+  .on("mouseout", function(d) {
+      d3.select(this)
+        .style("cursor", "none")  
+        .transition()
+        .duration(duration)
+        .selectAll(".text").remove();
+    })
+  .append("circle")
+  .attr("cx", d => xScale(d.date))
+  .attr("cy", d => yScale(d.price))
+  .attr("r", circleRadius)
+  .style('opacity', circleOpacity)
+  .on("mouseover", function(d) {
+        d3.select(this)
+          .transition()
+          .duration(duration)
+          .attr("r", circleRadiusHover);
+      })
+    .on("mouseout", function(d) {
+        d3.select(this) 
+          .transition()
+          .duration(duration)
+          .attr("r", circleRadius);  
+      });
+
+
+/* Add Axis into SVG */
+var xAxis = d3.axisBottom(xScale).ticks(5);
+var yAxis = d3.axisLeft(yScale).ticks(5);
+
+svg.append("g")
+  .attr("class", "x axis")
+  .attr("fill", "white")
+  .attr("transform", `translate(0, ${height-margin})`)
+  .call(xAxis);
+
+svg.append("g")
+  .attr("class", "y axis")
+  .attr("fill", "white")
+  .call(yAxis)
+  .append('text')
+  .attr("y", 15)
+  .attr("transform", "rotate(-90)")
+  .text("Total values");
+  </script>
+
+
+
+
+
+</body>
+</html>
